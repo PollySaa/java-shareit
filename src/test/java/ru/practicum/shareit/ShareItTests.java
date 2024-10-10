@@ -99,7 +99,7 @@ class ShareItTests {
 
 	@Test
 	void updateItemNotFoundException() {
-		ItemDto itemDto = new ItemDto(1, "Book", "Some description", true, null);
+		ItemDto itemDto = new ItemDto(2, "Book", "Some description", true, null);
 		assertThrows(NotFoundException.class, () -> itemService.updateItem(2, 1, itemDto));
 	}
 }
