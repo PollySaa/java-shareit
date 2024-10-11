@@ -9,7 +9,6 @@ import ru.practicum.shareit.exceptions.UserAlreadyExistsException;
 import ru.practicum.shareit.item.ItemService;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.user.InMemoryUserStorage;
-import ru.practicum.shareit.user.UserMapper;
 import ru.practicum.shareit.user.UserService;
 import ru.practicum.shareit.user.UserStorage;
 import ru.practicum.shareit.user.dto.UserDto;
@@ -29,9 +28,8 @@ class ShareItTests {
 
 	@BeforeEach
 	void setUp() {
-        UserStorage userStorage = new InMemoryUserStorage();
-        UserMapper userMapper = new UserMapper();
-		userService = new UserService(userStorage, userMapper);
+        UserStorage userStorage = new InMemoryUserStorage();;
+		userService = new UserService(userStorage);
 		userDto1 = new UserDto(1, "Иван", "ivan@mail.ru");
 		userDto2 = new UserDto(2, "Петр", "petr@mail.ru");
 	}

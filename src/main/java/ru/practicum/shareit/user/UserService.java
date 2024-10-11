@@ -11,14 +11,13 @@ import java.util.List;
 import static java.util.stream.Collectors.toList;
 
 @Service
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @AllArgsConstructor
 public class UserService {
     UserStorage userStorage;
-    UserMapper userMapper;
 
     public UserDto createUser(UserDto userDto) {
-        return userMapper.toUserDto(userStorage.createUser(userMapper.toUser(userDto)));
+        return UserMapper.toUserDto(userStorage.createUser(UserMapper.toUser(userDto)));
     }
 
     public UserDto updateUser(UserDto userDto, Integer id) {
@@ -26,20 +25,20 @@ public class UserService {
             userDto.setId(id);
         }
 
-        return userMapper.toUserDto((userStorage.updateUser(userMapper.toUser(userDto))));
+        return UserMapper.toUserDto((userStorage.updateUser(UserMapper.toUser(userDto))));
     }
 
     public UserDto deleteUser(Integer id) {
-        return userMapper.toUserDto(userStorage.deleteUser(id));
+        return UserMapper.toUserDto(userStorage.deleteUser(id));
     }
 
     public UserDto getUserById(Integer id) {
-        return userMapper.toUserDto(userStorage.getUserById(id));
+        return UserMapper.toUserDto(userStorage.getUserById(id));
     }
 
     public List<UserDto> getUsers() {
         return userStorage.getUsers().stream()
-                .map(userMapper::toUserDto)
+                .map(UserMapper::toUserDto)
                 .collect(toList());
     }
 }

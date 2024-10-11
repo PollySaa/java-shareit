@@ -18,12 +18,11 @@ import static java.util.stream.Collectors.toList;
 @AllArgsConstructor
 public class ItemService {
     ItemStorage itemStorage;
-    ItemMapper itemMapper;
     UserService userService;
 
     public ItemDto addItem(Integer ownerId, ItemDto itemDto) {
         if (userService.getUserById(ownerId) != null) {
-            itemDto = itemMapper.toItemDto(itemStorage.addItem(itemMapper.toItem(itemDto, ownerId)));
+            itemDto = ItemMapper.toItemDto(itemStorage.addItem(ItemMapper.toItem(itemDto, ownerId)));
         }
         return itemDto;
     }
@@ -39,26 +38,26 @@ public class ItemService {
         }
 
         if (userService.getUserById(ownerId) != null) {
-            itemDto = itemMapper.toItemDto(itemStorage.updateItem(itemMapper.toItem(itemDto, ownerId)));
+            itemDto = ItemMapper.toItemDto(itemStorage.updateItem(ItemMapper.toItem(itemDto, ownerId)));
         }
 
         return itemDto;
     }
 
     public ItemDto getItemById(Integer itemId) {
-        return itemMapper.toItemDto(itemStorage.getItemById(itemId));
+        return ItemMapper.toItemDto(itemStorage.getItemById(itemId));
     }
 
     public List<ItemDto> getItemsByOwnerId(Integer ownerId) {
         return itemStorage.getItemsByOwnerId(ownerId).stream()
-                .map(itemMapper::toItemDto)
+                .map(ItemMapper::toItemDto)
                 .collect(toList());
     }
 
     public List<ItemDto> searchItem(String text) {
         text = text.toLowerCase();
         return itemStorage.searchItem(text).stream()
-                .map(itemMapper::toItemDto)
+                .map(ItemMapper::toItemDto)
                 .collect(toList());
     }
 }

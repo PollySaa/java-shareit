@@ -1,6 +1,6 @@
 package ru.practicum.shareit.request;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -18,6 +18,6 @@ public class ItemRequest {
     @Size(min = 1, max = 200)
     String description;
     User requestor;
-    @NotNull
+    @Future
     LocalDate created;
 }
