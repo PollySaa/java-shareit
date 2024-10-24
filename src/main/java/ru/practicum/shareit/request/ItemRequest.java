@@ -14,7 +14,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ItemRequest {
-    Integer id;
+    Long id;
     @Size(min = 1, max = 200)
     String description;
     User requestor;
