@@ -29,6 +29,6 @@ public class Item {
     @JoinColumn(name = "owner_id")
     User owner;
     @Column(name = "request_id")
-    String request;
+    Long request;
 }
 
