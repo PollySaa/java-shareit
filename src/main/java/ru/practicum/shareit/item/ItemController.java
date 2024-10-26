@@ -24,6 +24,7 @@ public class ItemController {
     @ResponseBody
     @PostMapping
     public ItemDto addItem(@RequestHeader(X_SHARER_USER_ID) Long userId, @RequestBody ItemDto itemDto) {
+        log.info("Выполнение addItem");
         return itemService.addItem(userId, itemDto);
     }
 
@@ -31,21 +32,25 @@ public class ItemController {
     @PatchMapping("/{item-id}")
     public ItemDto updateItem(@RequestHeader(X_SHARER_USER_ID) Long userId, @PathVariable("item-id") Long itemId,
                               @RequestBody ItemUpdateDto itemUpdateDto) {
+        log.info("Выполнение updateItem");
         return itemService.updateItem(userId, itemId, itemUpdateDto);
     }
 
     @GetMapping("/{item-id}")
     public ItemCommentDto getItemById(@PathVariable("item-id") Long itemId) {
+        log.info("Выполнение getItemById");
         return itemService.getItemById(itemId);
     }
 
     @GetMapping
     public List<ItemDto> getItemsByOwnerId(@RequestHeader(X_SHARER_USER_ID) Long userId) {
+        log.info("Выполнение getItemsByOwnerId");
         return itemService.getItemsByOwnerId(userId);
     }
 
     @GetMapping("/search")
     public List<ItemDto> getItemsBySearchQuery(@RequestParam String text) {
+        log.info("Выполнение getItemsBySearchQuery");
         return itemService.searchItems(text);
     }
 
@@ -53,6 +58,7 @@ public class ItemController {
     @PostMapping("/{item-id}/comment")
     public CommentDto createComment(@RequestHeader(X_SHARER_USER_ID) Long userId, @PathVariable("item-id") Long itemId,
                                     @RequestBody CommentDto commentDto) {
+        log.info("Выполнение createComment");
         return itemService.createComment(userId, itemId, commentDto);
     }
 }
