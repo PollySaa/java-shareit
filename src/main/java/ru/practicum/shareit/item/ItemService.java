@@ -1,63 +1,22 @@
 package ru.practicum.shareit.item;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import org.springframework.stereotype.Service;
-import ru.practicum.shareit.exceptions.NotFoundException;
+import ru.practicum.shareit.item.dto.CommentDto;
+import ru.practicum.shareit.item.dto.ItemCommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.user.UserService;
+import ru.practicum.shareit.item.dto.ItemUpdateDto;
 
 import java.util.List;
 
-import static java.util.stream.Collectors.toList;
+public interface ItemService {
+    ItemDto addItem(Long ownerId, ItemDto itemDto);
 
-@Service
-@FieldDefaults(level = AccessLevel.PRIVATE)
-@AllArgsConstructor
-public class ItemService {
-    ItemStorage itemStorage;
-    UserService userService;
+    ItemDto updateItem(Long ownerId, Long itemId, ItemUpdateDto itemUpdateDto);
 
-    public ItemDto addItem(Integer ownerId, ItemDto itemDto) {
-        if (userService.getUserById(ownerId) != null) {
-            itemDto = ItemMapper.toItemDto(itemStorage.addItem(ItemMapper.toItem(itemDto, ownerId)));
-        }
-        return itemDto;
-    }
+    ItemCommentDto getItemById(Long itemId);
 
-    public ItemDto updateItem(Integer ownerId, Integer itemId, ItemDto itemDto) {
-        if (itemDto.getId() == null) {
-            itemDto.setId(itemId);
-        }
+    List<ItemDto> getItemsByOwnerId(Long ownerId);
 
-        Item oldItem = itemStorage.getItemById(itemId);
-        if (!oldItem.getOwnerId().equals(ownerId)) {
-            throw new NotFoundException("У пользователя нет такой вещи!");
-        }
+    List<ItemDto> searchItems(String text);
 
-        if (userService.getUserById(ownerId) != null) {
-            itemDto = ItemMapper.toItemDto(itemStorage.updateItem(ItemMapper.toItem(itemDto, ownerId)));
-        }
-
-        return itemDto;
-    }
-
-    public ItemDto getItemById(Integer itemId) {
-        return ItemMapper.toItemDto(itemStorage.getItemById(itemId));
-    }
-
-    public List<ItemDto> getItemsByOwnerId(Integer ownerId) {
-        return itemStorage.getItemsByOwnerId(ownerId).stream()
-                .map(ItemMapper::toItemDto)
-                .collect(toList());
-    }
-
-    public List<ItemDto> searchItem(String text) {
-        text = text.toLowerCase();
-        return itemStorage.searchItem(text).stream()
-                .map(ItemMapper::toItemDto)
-                .collect(toList());
-    }
+    CommentDto createComment(Long userId, Long itemId, CommentDto commentDto);
 }
