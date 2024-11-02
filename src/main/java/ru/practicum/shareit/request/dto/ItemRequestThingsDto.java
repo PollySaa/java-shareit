@@ -4,16 +4,16 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
-import ru.practicum.shareit.user.User;
+import ru.practicum.shareit.item.dto.ItemResponseDto;
 
-import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ItemRequestDto {
+public class ItemRequestThingsDto {
     Long id;
     String description;
-    User requester;
-    LocalDateTime created;
+    String created;
+    List<ItemResponseDto> items;
 }

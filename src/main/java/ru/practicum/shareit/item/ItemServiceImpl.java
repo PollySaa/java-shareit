@@ -11,6 +11,8 @@ import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.item.dto.*;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.request.ItemRequestRepository;
+import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
 
@@ -27,14 +29,21 @@ public class ItemServiceImpl implements ItemService {
     UserRepository userRepository;
     BookingRepository bookingRepository;
     CommentRepository commentRepository;
+    ItemRequestRepository itemRequestRepository;
 
     @Override
     public ItemDto addItem(Long ownerId, ItemDto itemDto) {
         if (itemDto.getName().isEmpty() || itemDto.getDescription().isEmpty() || itemDto.getAvailable() == null) {
             throw new ValidationException("Некорректные данные!");
         }
+        ItemRequest itemRequest = null;
+        Long requestId = itemDto.getRequestId();
+        if (requestId != null) {
+            itemRequest = itemRequestRepository.findById(requestId).orElseThrow(() ->
+                 new NotFoundException("Запроса с id = " + requestId + " нет"));
+        }
         User user = userRepository.findById(ownerId).orElseThrow(() -> new NotFoundException("Пользователь не найден"));
-        Item item = itemRepository.save(ItemMapper.toItem(itemDto, user));
+        Item item = itemRepository.save(ItemMapper.toItem(itemDto, user, itemRequest));
         return ItemMapper.toItemDto(item);
     }
 
@@ -89,9 +98,9 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public CommentDto createComment(Long userId, Long itemId, CommentDto commentDto) {
         User author = userRepository.findById(userId).orElseThrow(() ->
-                new ValidationException("Отсутсвует автор с id: " + userId));
+                new ValidationException("Отсутсвует автор с id = " + userId));
         Item item = itemRepository.findById(itemId).orElseThrow(() ->
-                new NotFoundException("Отсутсвует вещь с id: " + itemId));
+                new NotFoundException("Отсутсвует вещь с id = " + itemId));
         Booking booking = bookingRepository.findFirstByItem_IdAndBooker_IdAndEndIsBeforeAndStatus(itemId,
                 userId, LocalDateTime.now(), Status.APPROVED);
 

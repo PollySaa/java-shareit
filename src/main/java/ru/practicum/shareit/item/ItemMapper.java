@@ -4,7 +4,9 @@ import lombok.experimental.UtilityClass;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemCommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemResponseDto;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.User;
 
 import java.util.List;
@@ -18,18 +20,18 @@ public class ItemMapper {
                 .description(item.getDescription())
                 .owner(item.getOwner().getId())
                 .available(item.getAvailable())
-                .request(item.getRequest())
+                .requestId(item.getRequest() != null ? item.getRequest().getId() : null)
                 .build();
     }
 
-    public static Item toItem(ItemDto itemDto, User user) {
+    public static Item toItem(ItemDto itemDto, User user, ItemRequest request) {
         return Item.builder()
                 .id(itemDto.getId())
                 .name(itemDto.getName())
                 .description(itemDto.getDescription())
                 .owner(user)
                 .available(itemDto.getAvailable())
-                .request(itemDto.getRequest())
+                .request(request)
                 .build();
     }
 
@@ -41,5 +43,19 @@ public class ItemMapper {
                 .available(item.getAvailable())
                 .comments(List.copyOf(comments))
                 .build();
+    }
+
+    public static ItemResponseDto toItemResponseDto(Item item) {
+        return ItemResponseDto.builder()
+                .id(item.getId())
+                .name(item.getName())
+                .ownerId(item.getOwner().getId())
+                .build();
+    }
+
+    public static List<ItemResponseDto> toItemResponseDtoList(List<Item> items) {
+        return items.stream()
+                .map(ItemMapper::toItemResponseDto)
+                .toList();
     }
 }
