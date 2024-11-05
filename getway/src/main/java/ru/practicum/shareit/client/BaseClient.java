@@ -111,7 +111,6 @@ public class BaseClient {
         if (response.hasBody()) {
             return responseBuilder.body(response.getBody());
         }
-
         return responseBuilder.build();
     }
 }

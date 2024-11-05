@@ -28,8 +28,7 @@ public class ItemRequestMapper {
                 .build();
     }
 
-    public static ItemRequestThingsDto toItemRequestThingsDto(ItemRequest itemRequest,
-                                                              List<ItemResponseDto> itemResponseDto) {
+    public static ItemRequestThingsDto toItemRequestThingsDto(ItemRequest itemRequest, List<ItemResponseDto> itemResponseDto) {
         return ItemRequestThingsDto.builder()
                 .id(itemRequest.getId())
                 .description(itemRequest.getDescription())

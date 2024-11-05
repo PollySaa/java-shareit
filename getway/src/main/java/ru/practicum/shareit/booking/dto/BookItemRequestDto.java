@@ -8,9 +8,9 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-@Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
 public class BookItemRequestDto {
 	private long itemId;
 	@FutureOrPresent

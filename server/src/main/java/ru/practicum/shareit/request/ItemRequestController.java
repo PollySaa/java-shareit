@@ -27,16 +27,16 @@ public class ItemRequestController {
         return itemRequestService.addRequest(userId, itemRequestDto);
     }
 
-    @GetMapping("/{request-id}")
-    public ItemRequestThingsDto get(@PathVariable("request-id") Long requestId) {
-        log.info("Выполнение get");
-        return itemRequestService.get(requestId);
-    }
-
     @GetMapping
     public List<ItemRequestThingsDto> getAllRequests(@RequestHeader(UserConstant.X_SHARER_USER_ID) Long userId) {
         log.info("Выполнение getAllRequests");
         return itemRequestService.getAllRequests(userId);
+    }
+
+    @GetMapping("/{request-id}")
+    public ItemRequestThingsDto get(@PathVariable("request-id") Long requestId) {
+        log.info("Выполнение get");
+        return itemRequestService.get(requestId);
     }
 
     @GetMapping("/all")

@@ -28,14 +28,14 @@ public class UserController {
         return userClient.update(userId, user);
     }
 
-    @GetMapping("/{user-id}")
-    public ResponseEntity<Object> getUserById(@PathVariable("user-id") long userId) {
-        return userClient.getUserById(userId);
-    }
-
     @GetMapping
     public ResponseEntity<Object> getUsers() {
         return userClient.getUsers();
+    }
+
+    @GetMapping("/{user-id}")
+    public ResponseEntity<Object> getUserById(@PathVariable("user-id") long userId) {
+        return userClient.getUserById(userId);
     }
 
     @DeleteMapping("/{user-id}")

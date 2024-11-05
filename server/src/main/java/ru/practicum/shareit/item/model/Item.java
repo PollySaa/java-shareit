@@ -10,9 +10,9 @@ import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.User;
 
 @Data
+@Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder(toBuilder = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
 @Table(name = "items")

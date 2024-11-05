@@ -7,9 +7,9 @@ import ru.practicum.shareit.user.User;
 import java.time.LocalDateTime;
 
 @Data
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder(toBuilder = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ItemRequestDto {
     Long id;

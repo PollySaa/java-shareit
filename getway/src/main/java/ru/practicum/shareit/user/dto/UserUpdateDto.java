@@ -5,9 +5,9 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @Data
+@Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder(toBuilder = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserUpdateDto {
     Long id;

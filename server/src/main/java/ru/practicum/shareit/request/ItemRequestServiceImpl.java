@@ -28,8 +28,8 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class ItemRequestServiceImpl implements ItemRequestService {
     ItemRequestRepository itemRequestRepository;
-    UserRepository userRepository;
     ItemRepository itemRepository;
+    UserRepository userRepository;
 
     @Override
     public ItemRequestDto addRequest(Long userId, ItemRequestDto itemRequestDto) {

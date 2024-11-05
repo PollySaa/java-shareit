@@ -7,9 +7,9 @@ import ru.practicum.shareit.item.dto.ItemResponseDto;
 import java.util.List;
 
 @Data
-@Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder(toBuilder = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ItemRequestThingsDto {
     Long id;

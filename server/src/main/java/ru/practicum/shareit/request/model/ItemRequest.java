@@ -20,7 +20,7 @@ public class ItemRequest {
     Long id;
     @Column(name = "description")
     String description;
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne()
     @JoinColumn(name = "requester_id")
     User requester;
     @Column(name = "created")
