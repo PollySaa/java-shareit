@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import ru.practicum.shareit.exceptions.NotFoundException;
+import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.item.ItemRepository;
 import ru.practicum.shareit.request.ItemRequestMapper;
 import ru.practicum.shareit.request.ItemRequestRepository;
@@ -142,5 +144,23 @@ public class ItemRequestServiceImplTest {
         assertEquals(2, allRequests.size());
         assertEquals("Test Request Description 1", allRequests.get(0).getDescription());
         assertEquals("Test Request Description 2", allRequests.get(1).getDescription());
+    }
+
+    @Test
+    void addRequestShouldThrowNotFoundExceptionWhenUserNotFound() {
+        ItemRequestDto requestDto = ItemRequestDto.builder()
+                .description("Test Request Description")
+                .build();
+
+        assertThrows(NotFoundException.class, () -> {
+            itemRequestService.addRequest(999L, requestDto);
+        });
+    }
+
+    @Test
+    void getShouldThrowValidationExceptionWhenRequestNotFound() {
+        assertThrows(ValidationException.class, () -> {
+            itemRequestService.get(999L);
+        });
     }
 }

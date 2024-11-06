@@ -10,7 +10,10 @@ import org.springframework.test.context.ActiveProfiles;
 import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.Status;
+import ru.practicum.shareit.exceptions.NotFoundException;
+import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.item.*;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemCommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemUpdateDto;
@@ -196,4 +199,130 @@ public class ItemServiceImplTest {
         assertEquals(comment.getCreatedDate(), newComment.getCreatedDate());
     }
 
+    @Test
+    void addItemShouldThrowValidationExceptionWhenItemDtoIsNull() {
+        assertThrows(ValidationException.class, () -> {
+            itemService.addItem(testUser.getId(), null);
+        });
+    }
+
+    @Test
+    void addItemShouldThrowValidationExceptionWhenItemDtoHasInvalidData() {
+        ItemDto invalidItemDto = ItemDto.builder()
+                .name("")
+                .description("")
+                .available(null)
+                .build();
+
+        assertThrows(ValidationException.class, () -> {
+            itemService.addItem(testUser.getId(), invalidItemDto);
+        });
+    }
+
+    @Test
+    void addItemShouldThrowNotFoundExceptionWhenUserNotFound() {
+        ItemDto itemDto = ItemDto.builder()
+                .name("Test Item")
+                .description("Test Description")
+                .available(true)
+                .build();
+
+        assertThrows(NotFoundException.class, () -> {
+            itemService.addItem(999L, itemDto);
+        });
+    }
+
+    @Test
+    void updateItemShouldThrowNotFoundExceptionWhenUserNotFound() {
+        ItemDto savedItemDto = itemService.addItem(testUser.getId(), itemDto);
+
+        ItemUpdateDto updateDto = ItemUpdateDto.builder()
+                .name("Updated Name")
+                .description("Updated Description")
+                .available(false)
+                .build();
+
+        assertThrows(NotFoundException.class, () -> {
+            itemService.updateItem(999L, savedItemDto.getId(), updateDto);
+        });
+    }
+
+    @Test
+    void updateItemShouldThrowNotFoundExceptionWhenItemNotFound() {
+        ItemUpdateDto updateDto = ItemUpdateDto.builder()
+                .name("Updated Name")
+                .description("Updated Description")
+                .available(false)
+                .build();
+
+        assertThrows(NotFoundException.class, () -> {
+            itemService.updateItem(testUser.getId(), 999L, updateDto);
+        });
+    }
+
+    @Test
+    void updateItemShouldThrowNotFoundExceptionWhenUserIsNotOwner() {
+        ItemDto savedItemDto = itemService.addItem(testUser.getId(), itemDto);
+
+        User anotherUser = User.builder()
+                .name("Another User")
+                .email("another@test.com")
+                .build();
+        anotherUser = userRepository.save(anotherUser);
+
+        ItemUpdateDto updateDto = ItemUpdateDto.builder()
+                .name("Updated Name")
+                .description("Updated Description")
+                .available(false)
+                .build();
+
+        User finalAnotherUser = anotherUser;
+        assertThrows(NotFoundException.class, () -> {
+            itemService.updateItem(finalAnotherUser.getId(), savedItemDto.getId(), updateDto);
+        });
+    }
+
+    @Test
+    void getItemByIdShouldThrowNotFoundExceptionWhenItemNotFound() {
+        assertThrows(NotFoundException.class, () -> {
+            itemService.getItemById(999L);
+        });
+    }
+
+    @Test
+    void createCommentShouldThrowValidationExceptionWhenUserNotFound() {
+        ItemDto savedItemDto = itemService.addItem(testUser.getId(), itemDto);
+
+        CommentDto commentDto = CommentDto.builder()
+                .text("Test Comment")
+                .build();
+
+        assertThrows(ValidationException.class, () -> {
+            itemService.createComment(999L, savedItemDto.getId(), commentDto);
+        });
+    }
+
+    @Test
+    void createCommentShouldThrowNotFoundExceptionWhenItemNotFound() {
+        CommentDto commentDto = CommentDto.builder()
+                .text("Test Comment")
+                .build();
+
+        assertThrows(NotFoundException.class, () -> {
+            itemService.createComment(testUser.getId(), 999L, commentDto);
+        });
+    }
+
+    @Test
+    void createCommentShouldThrowValidationExceptionWhenUserDidNotBookItem() {
+        ItemDto savedItemDto = itemService.addItem(testUser.getId(), itemDto);
+
+        CommentDto commentDto = CommentDto.builder()
+                .text("Test Comment")
+                .build();
+
+        assertThrows(ValidationException.class, () -> {
+            itemService.createComment(testUser.getId(), savedItemDto.getId(), commentDto);
+        });
+    }
 }

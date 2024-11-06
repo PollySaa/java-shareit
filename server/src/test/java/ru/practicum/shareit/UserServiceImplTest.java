@@ -7,6 +7,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import ru.practicum.shareit.exceptions.NotFoundException;
+import ru.practicum.shareit.exceptions.UserAlreadyExistsException;
 import ru.practicum.shareit.user.UserRepository;
 import ru.practicum.shareit.user.UserServiceImpl;
 import ru.practicum.shareit.user.dto.UserDto;
@@ -113,5 +114,43 @@ public class UserServiceImplTest {
         assertEquals(2, users.size());
         assertTrue(users.stream().anyMatch(u -> u.getName().equals("Test User 1")));
         assertTrue(users.stream().anyMatch(u -> u.getName().equals("Test User 2")));
+    }
+
+    @Test
+    void createUserShouldThrowUserAlreadyExistsExceptionWhenEmailAlreadyExists() {
+        UserDto userDto1 = UserDto.builder()
+                .name("Test User 1")
+                .email("test@example.com")
+                .build();
+
+        userService.createUser(userDto1);
+
+        UserDto userDto2 = UserDto.builder()
+                .name("Test User 2")
+                .email("test@example.com")
+                .build();
+
+        assertThrows(UserAlreadyExistsException.class, () -> {
+            userService.createUser(userDto2);
+        });
+    }
+
+    @Test
+    void updateUserShouldThrowNotFoundExceptionWhenUserNotFound() {
+        UserDto userDto = UserDto.builder()
+                .name("Updated User")
+                .email("updated@example.com")
+                .build();
+
+        assertThrows(NotFoundException.class, () -> {
+            userService.updateUser(userDto, 999L);
+        });
+    }
+
+    @Test
+    void getUserByIdShouldThrowNotFoundExceptionWhenUserNotFound() {
+        assertThrows(NotFoundException.class, () -> {
+            userService.getUserById(999L);
+        });
     }
 }
