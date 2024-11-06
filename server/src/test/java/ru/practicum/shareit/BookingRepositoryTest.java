@@ -65,7 +65,6 @@ public class BookingRepositoryTest {
                 .booker(user1)
                 .status(Status.WAITING)
                 .build();
-
         bookingRepository.save(booking1);
         bookingRepository.save(booking2);
     }
