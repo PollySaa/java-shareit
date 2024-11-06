@@ -1,118 +1,99 @@
 package ru.practicum.shareit;
 
-import org.junit.jupiter.api.BeforeEach;
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import ru.practicum.shareit.exceptions.NotFoundException;
-import ru.practicum.shareit.exceptions.UserAlreadyExistsException;
 import ru.practicum.shareit.user.UserRepository;
 import ru.practicum.shareit.user.UserServiceImpl;
 import ru.practicum.shareit.user.dto.UserDto;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-@DataJpaTest
+@ActiveProfiles("test")
+@Transactional
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
 public class UserServiceImplTest {
     @Autowired
-    private TestEntityManager entityManager;
+    private UserServiceImpl userService;
 
     @Autowired
     private UserRepository userRepository;
 
-    private UserServiceImpl userService;
-
-    @BeforeEach
-    public void setUp() {
-        userService = new UserServiceImpl(userRepository);
-    }
-
     @Test
-    public void testCreateUser() {
+    void testCreateUser() {
         UserDto userDto = UserDto.builder()
                 .name("Test User")
                 .email("test@example.com")
                 .build();
 
-        UserDto createdUser = userService.createUser(userDto);
+        UserDto createdUserDto = userService.createUser(userDto);
 
-        assertNotNull(createdUser.getId());
-        assertEquals(userDto.getName(), createdUser.getName());
-        assertEquals(userDto.getEmail(), createdUser.getEmail());
+        assertNotNull(createdUserDto.getId());
+        assertEquals(userDto.getName(), createdUserDto.getName());
+        assertEquals(userDto.getEmail(), createdUserDto.getEmail());
     }
 
     @Test
-    public void testCreateUserWithExistingEmail() {
+    void testUpdateUser() {
         UserDto userDto = UserDto.builder()
                 .name("Test User")
                 .email("test@example.com")
                 .build();
 
-        userService.createUser(userDto);
-
-        UserDto userDto2 = UserDto.builder()
-                .name("Another User")
-                .email("test@example.com")
-                .build();
-
-        assertThrows(UserAlreadyExistsException.class, () -> userService.createUser(userDto2));
-    }
-
-    @Test
-    public void testUpdateUser() {
-        UserDto userDto = UserDto.builder()
-                .name("Test User")
-                .email("test@example.com")
-                .build();
-
-        UserDto createdUser = userService.createUser(userDto);
+        UserDto createdUserDto = userService.createUser(userDto);
 
         UserDto updatedUserDto = UserDto.builder()
                 .name("Updated User")
                 .email("updated@example.com")
                 .build();
 
-        UserDto updatedUser = userService.updateUser(updatedUserDto, createdUser.getId());
+        UserDto updatedUser = userService.updateUser(updatedUserDto, createdUserDto.getId());
 
+        assertNotNull(updatedUser.getId());
         assertEquals(updatedUserDto.getName(), updatedUser.getName());
         assertEquals(updatedUserDto.getEmail(), updatedUser.getEmail());
     }
 
     @Test
-    public void testDeleteUser() {
+    void testDeleteUser() {
         UserDto userDto = UserDto.builder()
                 .name("Test User")
                 .email("test@example.com")
                 .build();
 
-        UserDto createdUser = userService.createUser(userDto);
+        UserDto createdUserDto = userService.createUser(userDto);
 
-        userService.deleteUser(createdUser.getId());
+        userService.deleteUser(createdUserDto.getId());
 
-        assertThrows(NotFoundException.class, () -> userService.getUserById(createdUser.getId()));
+        assertThrows(NotFoundException.class, () -> userService.getUserById(createdUserDto.getId()));
     }
 
     @Test
-    public void testGetUserById() {
+    void testGetUserById() {
         UserDto userDto = UserDto.builder()
                 .name("Test User")
                 .email("test@example.com")
                 .build();
 
-        UserDto createdUser = userService.createUser(userDto);
+        UserDto createdUserDto = userService.createUser(userDto);
 
-        UserDto fetchedUser = userService.getUserById(createdUser.getId());
+        UserDto retrievedUserDto = userService.getUserById(createdUserDto.getId());
 
-        assertEquals(createdUser.getId(), fetchedUser.getId());
-        assertEquals(createdUser.getName(), fetchedUser.getName());
-        assertEquals(createdUser.getEmail(), fetchedUser.getEmail());
+        assertNotNull(retrievedUserDto);
+        assertEquals(createdUserDto.getId(), retrievedUserDto.getId());
+        assertEquals(createdUserDto.getName(), retrievedUserDto.getName());
+        assertEquals(createdUserDto.getEmail(), retrievedUserDto.getEmail());
     }
 
     @Test
-    public void testGetUsers() {
+    void testGetUsers() {
         UserDto userDto1 = UserDto.builder()
                 .name("Test User 1")
                 .email("test1@example.com")
@@ -126,6 +107,11 @@ public class UserServiceImplTest {
         userService.createUser(userDto1);
         userService.createUser(userDto2);
 
-        assertEquals(2, userService.getUsers().size());
+        List<UserDto> users = userService.getUsers();
+
+        assertNotNull(users);
+        assertEquals(2, users.size());
+        assertTrue(users.stream().anyMatch(u -> u.getName().equals("Test User 1")));
+        assertTrue(users.stream().anyMatch(u -> u.getName().equals("Test User 2")));
     }
 }

@@ -28,5 +28,5 @@ public class Comment {
     @JoinColumn(name = "author_id")
     User author;
     @Column(nullable = false, name = "created")
-    private LocalDateTime createdDate;
+    LocalDateTime createdDate;
 }
