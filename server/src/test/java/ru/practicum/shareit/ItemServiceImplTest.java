@@ -18,6 +18,8 @@ import ru.practicum.shareit.item.dto.ItemCommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemUpdateDto;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.request.ItemRequestRepository;
+import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
 
@@ -45,6 +47,9 @@ public class ItemServiceImplTest {
 
     @Autowired
     private CommentRepository commentRepository;
+
+    @Autowired
+    private ItemRequestRepository itemRequestRepository;
 
     private User testUser;
     private ItemDto itemDto;
@@ -323,6 +328,156 @@ public class ItemServiceImplTest {
 
         assertThrows(ValidationException.class, () -> {
             itemService.createComment(testUser.getId(), savedItemDto.getId(), commentDto);
+        });
+    }
+
+    @Test
+    void addItemShouldAddItemWithRequestWhenRequestExists() {
+        ItemRequest itemRequest = ItemRequest.builder()
+                .description("Test Request Description")
+                .requester(testUser)
+                .created(LocalDateTime.now())
+                .build();
+        itemRequest = itemRequestRepository.save(itemRequest);
+
+        ItemDto itemDto = ItemDto.builder()
+                .name("Test Item")
+                .description("Test Description")
+                .available(true)
+                .requestId(itemRequest.getId())
+                .build();
+
+        ItemDto savedItemDto = itemService.addItem(testUser.getId(), itemDto);
+
+        assertNotNull(savedItemDto.getId());
+        assertEquals(itemDto.getName(), savedItemDto.getName());
+        assertEquals(itemDto.getDescription(), savedItemDto.getDescription());
+        assertEquals(itemDto.getAvailable(), savedItemDto.getAvailable());
+        assertEquals(itemRequest.getId(), savedItemDto.getRequestId());
+    }
+
+    @Test
+    void addItemShouldAddItemWithoutRequestWhenRequestDoesNotExist() {
+        ItemDto itemDto = ItemDto.builder()
+                .name("Test Item")
+                .description("Test Description")
+                .available(true)
+                .build();
+
+        ItemDto savedItemDto = itemService.addItem(testUser.getId(), itemDto);
+
+        assertNotNull(savedItemDto.getId());
+        assertEquals(itemDto.getName(), savedItemDto.getName());
+        assertEquals(itemDto.getDescription(), savedItemDto.getDescription());
+        assertEquals(itemDto.getAvailable(), savedItemDto.getAvailable());
+        assertNull(savedItemDto.getRequestId());
+    }
+
+    @Test
+    void updateItemShouldUpdateNameWhenNameIsProvided() {
+        ItemDto savedItemDto = itemService.addItem(testUser.getId(), itemDto);
+
+        ItemUpdateDto updateDto = ItemUpdateDto.builder()
+                .name("Updated Name")
+                .build();
+
+        ItemDto updatedItemDto = itemService.updateItem(testUser.getId(), savedItemDto.getId(), updateDto);
+
+        assertNotNull(updatedItemDto.getId());
+        assertEquals(updateDto.getName(), updatedItemDto.getName());
+        assertEquals(savedItemDto.getDescription(), updatedItemDto.getDescription());
+        assertEquals(savedItemDto.getAvailable(), updatedItemDto.getAvailable());
+    }
+
+    @Test
+    void updateItemShouldUpdateDescriptionWhenDescriptionIsProvided() {
+        ItemDto savedItemDto = itemService.addItem(testUser.getId(), itemDto);
+
+        ItemUpdateDto updateDto = ItemUpdateDto.builder()
+                .description("Updated Description")
+                .build();
+
+        ItemDto updatedItemDto = itemService.updateItem(testUser.getId(), savedItemDto.getId(), updateDto);
+
+        assertNotNull(updatedItemDto.getId());
+        assertEquals(savedItemDto.getName(), updatedItemDto.getName());
+        assertEquals(updateDto.getDescription(), updatedItemDto.getDescription());
+        assertEquals(savedItemDto.getAvailable(), updatedItemDto.getAvailable());
+    }
+
+    @Test
+    void updateItemShouldUpdateAvailableWhenAvailableIsProvided() {
+        ItemDto savedItemDto = itemService.addItem(testUser.getId(), itemDto);
+
+        ItemUpdateDto updateDto = ItemUpdateDto.builder()
+                .available(false)
+                .build();
+
+        ItemDto updatedItemDto = itemService.updateItem(testUser.getId(), savedItemDto.getId(), updateDto);
+
+        assertNotNull(updatedItemDto.getId());
+        assertEquals(savedItemDto.getName(), updatedItemDto.getName());
+        assertEquals(savedItemDto.getDescription(), updatedItemDto.getDescription());
+        assertEquals(updateDto.getAvailable(), updatedItemDto.getAvailable());
+    }
+
+    @Test
+    void searchItemsShouldReturnEmptyListWhenTextIsEmpty() {
+        List<ItemDto> foundItems = itemService.searchItems("");
+
+        assertNotNull(foundItems);
+        assertTrue(foundItems.isEmpty());
+    }
+
+    @Test
+    void searchItemsShouldReturnEmptyListWhenTextIsNull() {
+        List<ItemDto> foundItems = itemService.searchItems(null);
+
+        assertNotNull(foundItems);
+        assertTrue(foundItems.isEmpty());
+    }
+
+    @Test
+    void searchItemsShouldReturnItemsWhenTextIsNotEmpty() {
+        ItemDto itemDto1 = ItemDto.builder()
+                .name("Test Item 1")
+                .description("Test Description 1")
+                .available(true)
+                .build();
+
+        ItemDto itemDto2 = ItemDto.builder()
+                .name("Test Item 2")
+                .description("Test Description 2")
+                .available(false)
+                .build();
+
+        itemService.addItem(testUser.getId(), itemDto1);
+        itemService.addItem(testUser.getId(), itemDto2);
+
+        List<ItemDto> foundItems = itemService.searchItems("Test");
+
+        assertNotNull(foundItems);
+        assertEquals(1, foundItems.size());
+        assertEquals("Test Item 1", foundItems.getFirst().getName());
+    }
+
+    @Test
+    void createCommentShouldThrowValidationExceptionWhenUserHasNotBookedItem() {
+        Item item = Item.builder()
+                .owner(testUser)
+                .name("Test Item")
+                .description("Test Description")
+                .available(true)
+                .build();
+        item = itemRepository.save(item);
+
+        CommentDto commentDto = CommentDto.builder()
+                .text("Test Comment")
+                .build();
+
+        Item finalItem = item;
+        assertThrows(ValidationException.class, () -> {
+            itemService.createComment(testUser.getId(), finalItem.getId(), commentDto);
         });
     }
 }

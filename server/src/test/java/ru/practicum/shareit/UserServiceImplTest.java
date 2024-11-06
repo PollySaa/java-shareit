@@ -153,4 +153,24 @@ public class UserServiceImplTest {
             userService.getUserById(999L);
         });
     }
+
+    @Test
+    void updateUserShouldUpdateEmailWhenEmailIsProvided() {
+        UserDto userDto = UserDto.builder()
+                .name("Test User")
+                .email("test@example.com")
+                .build();
+
+        UserDto createdUserDto = userService.createUser(userDto);
+
+        UserDto updateDto = UserDto.builder()
+                .email("updated@example.com")
+                .build();
+
+        UserDto updatedUserDto = userService.updateUser(updateDto, createdUserDto.getId());
+
+        assertNotNull(updatedUserDto.getId());
+        assertEquals(createdUserDto.getName(), updatedUserDto.getName());
+        assertEquals(updateDto.getEmail(), updatedUserDto.getEmail());
+    }
 }

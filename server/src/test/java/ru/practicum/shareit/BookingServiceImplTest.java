@@ -327,4 +327,218 @@ class BookingServiceImplTest {
             bookingService.getBookingsOwner(user.getId(), "UNKNOWN_STATE");
         });
     }
+
+    @Test
+    void updateBookingShouldSetStatusToApprovedWhenApprovedIsTrue() {
+        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
+        LocalDateTime end = LocalDateTime.now().plusHours(1);
+
+        Booking booking = Booking.builder()
+                .status(Status.WAITING)
+                .item(item)
+                .booker(user)
+                .start(start)
+                .end(end)
+                .build();
+        booking = bookingRepository.save(booking);
+
+        BookingInputDto bookingResponseDto = bookingService.updateBooking(user.getId(), booking.getId(), true);
+
+        assertNotNull(bookingResponseDto.getId());
+        assertEquals(Status.APPROVED.name(), bookingResponseDto.getStatus());
+    }
+
+    @Test
+    void updateBookingShouldSetStatusToRejectedWhenApprovedIsFalse() {
+        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
+        LocalDateTime end = LocalDateTime.now().plusHours(1);
+
+        Booking booking = Booking.builder()
+                .status(Status.WAITING)
+                .item(item)
+                .booker(user)
+                .start(start)
+                .end(end)
+                .build();
+        booking = bookingRepository.save(booking);
+
+        BookingInputDto bookingResponseDto = bookingService.updateBooking(user.getId(), booking.getId(), false);
+
+        assertNotNull(bookingResponseDto.getId());
+        assertEquals(Status.REJECTED.name(), bookingResponseDto.getStatus());
+    }
+
+    @Test
+    void getBookingsShouldReturnAllBookingsWhenStateIsAll() {
+        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
+        LocalDateTime end = LocalDateTime.now().plusHours(1);
+
+        Booking booking = Booking.builder()
+                .status(Status.APPROVED)
+                .item(item)
+                .booker(user)
+                .start(start)
+                .end(end)
+                .build();
+        booking = bookingRepository.save(booking);
+
+        List<BookingInputDto> bookingResponseDtoList = bookingService.getBookings(user.getId(), State.ALL.name());
+
+        assertFalse(bookingResponseDtoList.isEmpty());
+        assertEquals(1, bookingResponseDtoList.size());
+    }
+
+    @Test
+    void getBookingsShouldReturnFutureBookingsWhenStateIsFuture() {
+        LocalDateTime start = LocalDateTime.now().plusHours(1);
+        LocalDateTime end = LocalDateTime.now().plusHours(2);
+
+        Booking booking = Booking.builder()
+                .status(Status.APPROVED)
+                .item(item)
+                .booker(user)
+                .start(start)
+                .end(end)
+                .build();
+        booking = bookingRepository.save(booking);
+
+        List<BookingInputDto> bookingResponseDtoList = bookingService.getBookings(user.getId(), State.FUTURE.name());
+
+        assertFalse(bookingResponseDtoList.isEmpty());
+        assertEquals(1, bookingResponseDtoList.size());
+    }
+
+    @Test
+    void getBookingsShouldReturnWaitingBookingsWhenStateIsWaiting() {
+        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
+        LocalDateTime end = LocalDateTime.now().plusHours(1);
+
+        Booking booking = Booking.builder()
+                .status(Status.WAITING)
+                .item(item)
+                .booker(user)
+                .start(start)
+                .end(end)
+                .build();
+        booking = bookingRepository.save(booking);
+
+        List<BookingInputDto> bookingResponseDtoList = bookingService.getBookings(user.getId(), State.WAITING.name());
+
+        assertFalse(bookingResponseDtoList.isEmpty());
+        assertEquals(1, bookingResponseDtoList.size());
+    }
+
+    @Test
+    void getBookingsShouldReturnRejectedBookingsWhenStateIsRejected() {
+        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
+        LocalDateTime end = LocalDateTime.now().plusHours(1);
+
+        Booking booking = Booking.builder()
+                .status(Status.REJECTED)
+                .item(item)
+                .booker(user)
+                .start(start)
+                .end(end)
+                .build();
+        booking = bookingRepository.save(booking);
+
+        List<BookingInputDto> bookingResponseDtoList = bookingService.getBookings(user.getId(), State.REJECTED.name());
+
+        assertFalse(bookingResponseDtoList.isEmpty());
+        assertEquals(1, bookingResponseDtoList.size());
+    }
+
+    @Test
+    void getBookingsShouldThrowValidationExceptionWhenStateIsUnknown() {
+        assertThrows(ValidationException.class, () -> {
+            bookingService.getBookings(user.getId(), "UNKNOWN_STATE");
+        });
+    }
+
+    @Test
+    void getBookingsOwnerShouldReturnAllBookingsWhenStateIsAll() {
+        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
+        LocalDateTime end = LocalDateTime.now().plusHours(1);
+
+        Booking booking = Booking.builder()
+                .status(Status.APPROVED)
+                .item(item)
+                .booker(user)
+                .start(start)
+                .end(end)
+                .build();
+        booking = bookingRepository.save(booking);
+
+        List<BookingInputDto> bookingResponseDtoList = bookingService.getBookingsOwner(item.getOwner().getId(), State.ALL.name());
+
+        assertFalse(bookingResponseDtoList.isEmpty());
+        assertEquals(1, bookingResponseDtoList.size());
+    }
+
+    @Test
+    void getBookingsOwnerShouldReturnFutureBookingsWhenStateIsFuture() {
+        LocalDateTime start = LocalDateTime.now().plusHours(1);
+        LocalDateTime end = LocalDateTime.now().plusHours(2);
+
+        Booking booking = Booking.builder()
+                .status(Status.APPROVED)
+                .item(item)
+                .booker(user)
+                .start(start)
+                .end(end)
+                .build();
+        booking = bookingRepository.save(booking);
+
+        List<BookingInputDto> bookingResponseDtoList = bookingService.getBookingsOwner(item.getOwner().getId(), State.FUTURE.name());
+
+        assertFalse(bookingResponseDtoList.isEmpty());
+        assertEquals(1, bookingResponseDtoList.size());
+    }
+
+    @Test
+    void getBookingsOwnerShouldReturnWaitingBookingsWhenStateIsWaiting() {
+        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
+        LocalDateTime end = LocalDateTime.now().plusHours(1);
+
+        Booking booking = Booking.builder()
+                .status(Status.WAITING)
+                .item(item)
+                .booker(user)
+                .start(start)
+                .end(end)
+                .build();
+        booking = bookingRepository.save(booking);
+
+        List<BookingInputDto> bookingResponseDtoList = bookingService.getBookingsOwner(item.getOwner().getId(), State.WAITING.name());
+
+        assertFalse(bookingResponseDtoList.isEmpty());
+        assertEquals(1, bookingResponseDtoList.size());
+    }
+
+    @Test
+    void getBookingsOwnerShouldReturnRejectedBookingsWhenStateIsRejected() {
+        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
+        LocalDateTime end = LocalDateTime.now().plusHours(1);
+
+        Booking booking = Booking.builder()
+                .status(Status.REJECTED)
+                .item(item)
+                .booker(user)
+                .start(start)
+                .end(end)
+                .build();
+        booking = bookingRepository.save(booking);
+
+        List<BookingInputDto> bookingResponseDtoList = bookingService.getBookingsOwner(item.getOwner().getId(), State.REJECTED.name());
+
+        assertFalse(bookingResponseDtoList.isEmpty());
+        assertEquals(1, bookingResponseDtoList.size());
+    }
+
+    @Test
+    void getBookingsOwnerShouldThrowValidationExceptionWhenStateIsUnknown() {
+        assertThrows(ValidationException.class, () -> {
+            bookingService.getBookingsOwner(item.getOwner().getId(), "UNKNOWN_STATE");
+        });
+    }
 }
