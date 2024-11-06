@@ -9,6 +9,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import ru.practicum.shareit.booking.*;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingInputDto;
+import ru.practicum.shareit.exceptions.NotFoundException;
+import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.item.ItemRepository;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.UserRepository;
@@ -171,5 +173,158 @@ class BookingServiceImplTest {
         assertEquals(Status.APPROVED.name(), bookingResponseDto.getStatus());
         assertEquals(item.getId(), bookingResponseDto.getItem().getId());
         assertEquals(user.getId(), bookingResponseDto.getBooker().getId());
+    }
+
+    @Test
+    void createBookingShouldThrowNotFoundExceptionWhenItemNotFound() {
+        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
+        LocalDateTime end = LocalDateTime.now().plusHours(1);
+
+        BookingDto bookingDto = BookingDto.builder()
+                .start(start)
+                .end(end)
+                .itemId(999L)
+                .bookerId(user.getId())
+                .status(State.ALL.name())
+                .build();
+
+        assertThrows(NotFoundException.class, () -> {
+            bookingService.createBooking(user.getId(), bookingDto);
+        });
+    }
+
+    @Test
+    void createBookingShouldThrowNotFoundExceptionWhenUserNotFound() {
+        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
+        LocalDateTime end = LocalDateTime.now().plusHours(1);
+
+        BookingDto bookingDto = BookingDto.builder()
+                .start(start)
+                .end(end)
+                .itemId(item.getId())
+                .bookerId(999L)
+                .status(State.ALL.name())
+                .build();
+
+        assertThrows(NotFoundException.class, () -> {
+            bookingService.createBooking(999L, bookingDto);
+        });
+    }
+
+    @Test
+    void createBookingShouldThrowValidationExceptionWhenItemNotAvailable() {
+        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
+        LocalDateTime end = LocalDateTime.now().plusHours(1);
+
+        item.setAvailable(false);
+        itemRepository.save(item);
+
+        BookingDto bookingDto = BookingDto.builder()
+                .start(start)
+                .end(end)
+                .itemId(item.getId())
+                .bookerId(user.getId())
+                .status(State.ALL.name())
+                .build();
+
+        assertThrows(ValidationException.class, () -> {
+            bookingService.createBooking(user.getId(), bookingDto);
+        });
+    }
+
+    @Test
+    void updateBookingShouldThrowNotFoundExceptionWhenBookingNotFound() {
+        assertThrows(NotFoundException.class, () -> {
+            bookingService.updateBooking(user.getId(), 999L, true);
+        });
+    }
+
+    @Test
+    void updateBookingShouldThrowValidationExceptionWhenUserIsNotOwner() {
+        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
+        LocalDateTime end = LocalDateTime.now().plusHours(1);
+
+        Booking booking = Booking.builder()
+                .status(Status.WAITING)
+                .item(item)
+                .booker(user)
+                .start(start)
+                .end(end)
+                .build();
+        booking = bookingRepository.save(booking);
+
+        User anotherUser = User.builder()
+                .name("Another User")
+                .email("another@test.com")
+                .build();
+        anotherUser = userRepository.save(anotherUser);
+
+        User finalAnotherUser = anotherUser;
+        Booking finalBooking = booking;
+        assertThrows(ValidationException.class, () -> {
+            bookingService.updateBooking(finalAnotherUser.getId(), finalBooking.getId(), true);
+        });
+    }
+
+    @Test
+    void getBookingByIdShouldThrowNotFoundExceptionWhenBookingNotFound() {
+        assertThrows(NotFoundException.class, () -> {
+            bookingService.getBookingById(user.getId(), 999L);
+        });
+    }
+
+    @Test
+    void getBookingByIdShouldThrowValidationExceptionWhenUserIsNotBookerOrOwner() {
+        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
+        LocalDateTime end = LocalDateTime.now().plusHours(1);
+
+        Booking booking = Booking.builder()
+                .status(Status.APPROVED)
+                .item(item)
+                .booker(user)
+                .start(start)
+                .end(end)
+                .build();
+        booking = bookingRepository.save(booking);
+
+        User anotherUser = User.builder()
+                .name("Another User")
+                .email("another@test.com")
+                .build();
+        anotherUser = userRepository.save(anotherUser);
+
+        User finalAnotherUser = anotherUser;
+        Booking finalBooking = booking;
+        assertThrows(ValidationException.class, () -> {
+            bookingService.getBookingById(finalAnotherUser.getId(), finalBooking.getId());
+        });
+    }
+
+    @Test
+    void getBookingsShouldThrowValidationExceptionWhenUnknownState() {
+        assertThrows(ValidationException.class, () -> {
+            bookingService.getBookings(user.getId(), "UNKNOWN_STATE");
+        });
+    }
+
+    @Test
+    void getBookingsOwnerShouldThrowNotFoundExceptionWhenNoItems() {
+        User anotherUser = User.builder()
+                .name("Another User")
+                .email("another@test.com")
+                .build();
+        anotherUser = userRepository.save(anotherUser);
+
+        User finalAnotherUser = anotherUser;
+        assertThrows(NotFoundException.class, () -> {
+            bookingService.getBookingsOwner(finalAnotherUser.getId(), State.ALL.name());
+        });
+    }
+
+    @Test
+    void getBookingsOwnerShouldThrowValidationExceptionWhenUnknownState() {
+        assertThrows(ValidationException.class, () -> {
+            bookingService.getBookingsOwner(user.getId(), "UNKNOWN_STATE");
+        });
     }
 }
