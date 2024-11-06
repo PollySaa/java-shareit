@@ -1,5 +1,7 @@
 package ru.practicum.shareit;
 
+import jakarta.transaction.Transactional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Transactional
 public class ItemServiceImplTest {
     @Autowired
     private ItemServiceImpl itemService;
@@ -27,22 +30,28 @@ public class ItemServiceImplTest {
     @Autowired
     private ItemRepository itemRepository;
 
-    @Test
-    public void testAddItem() {
-        User user = User.builder()
-                .id(1L)
+    private User testUser;
+
+    @BeforeEach
+    public void setUp() {
+        itemRepository.deleteAll();
+        userRepository.deleteAll();
+        testUser = User.builder()
                 .name("Test User")
                 .email("test@example.com")
                 .build();
-        user = userRepository.save(user);
+        testUser = userRepository.save(testUser);
+    }
 
+    @Test
+    public void testAddItem() {
         ItemDto itemDto = ItemDto.builder()
                 .name("Test Item")
                 .description("Test Description")
                 .available(true)
                 .build();
 
-        ItemDto savedItemDto = itemService.addItem(user.getId(), itemDto);
+        ItemDto savedItemDto = itemService.addItem(testUser.getId(), itemDto);
 
         assertNotNull(savedItemDto.getId());
         assertEquals(itemDto.getName(), savedItemDto.getName());
@@ -58,19 +67,13 @@ public class ItemServiceImplTest {
 
     @Test
     public void testAddItemWithInvalidData() {
-        User user = User.builder()
-                .name("Test User")
-                .email("test@example.com")
-                .build();
-        user = userRepository.save(user);
-
         ItemDto itemDto = ItemDto.builder()
                 .name("")
                 .description("Test Description")
                 .available(true)
                 .build();
 
-        assertThrows(ValidationException.class, () -> itemService.addItem(1L, itemDto));
+        assertThrows(ValidationException.class, () -> itemService.addItem(testUser.getId(), itemDto));
     }
 
     @Test

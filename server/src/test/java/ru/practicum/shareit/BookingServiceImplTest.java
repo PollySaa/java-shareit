@@ -4,10 +4,9 @@ import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import ru.practicum.shareit.booking.BookingServiceImpl;
-import ru.practicum.shareit.booking.Status;
+import ru.practicum.shareit.booking.*;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingInputDto;
 import ru.practicum.shareit.item.ItemRepository;
@@ -21,11 +20,12 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-@ActiveProfiles("test")
 @Transactional
-public class BookingServiceImplTest {
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
+class BookingServiceImplTest {
+
     @Autowired
-    private BookingServiceImpl bookingService;
+    private BookingService bookingService;
 
     @Autowired
     private UserRepository userRepository;
@@ -33,97 +33,143 @@ public class BookingServiceImplTest {
     @Autowired
     private ItemRepository itemRepository;
 
+    @Autowired
+    private BookingRepository bookingRepository;
+
     private User user;
     private Item item;
 
     @BeforeEach
-    public void setUp() {
-        user = new User();
-        user.setName("Test User");
-        user.setEmail("test@example.com");
+    void setUp() {
+        bookingRepository.deleteAll();
+        itemRepository.deleteAll();
+        userRepository.deleteAll();
+
+        user = User.builder()
+                .name("Test User")
+                .email("test@test.com")
+                .build();
         user = userRepository.save(user);
 
-        item = new Item();
-        item.setName("Test Item");
-        item.setDescription("Test Description");
-        item.setAvailable(true);
-        item.setOwner(user);
+        item = Item.builder()
+                .owner(user)
+                .name("Test Item")
+                .description("Test Description")
+                .available(true)
+                .build();
         item = itemRepository.save(item);
     }
 
     @Test
-    public void testCreateBooking() {
+    void createBookingTest() {
+        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
+        LocalDateTime end = LocalDateTime.now().plusHours(1);
+
         BookingDto bookingDto = BookingDto.builder()
+                .start(start)
+                .end(end)
                 .itemId(item.getId())
-                .start(LocalDateTime.now().plusHours(1))
-                .end(LocalDateTime.now().plusHours(2))
+                .bookerId(user.getId())
+                .status(State.ALL.name())
                 .build();
 
-        BookingInputDto createdBooking = bookingService.createBooking(user.getId(), bookingDto);
+        BookingInputDto bookingResponseDto = bookingService.createBooking(user.getId(), bookingDto);
 
-        assertNotNull(createdBooking);
-        assertEquals(Status.WAITING.name(), createdBooking.getStatus());
+        assertNotNull(bookingResponseDto.getId());
+        assertEquals(item.getId(), bookingResponseDto.getItem().getId());
+        assertEquals(user.getId(), bookingResponseDto.getBooker().getId());
+        assertEquals(Status.WAITING.name(), bookingResponseDto.getStatus());
     }
 
     @Test
-    public void testGetBookingById() {
-        BookingDto bookingDto = BookingDto.builder()
-                .itemId(item.getId())
-                .start(LocalDateTime.now().plusHours(1))
-                .end(LocalDateTime.now().plusHours(2))
+    void getBookingTest() {
+        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
+        LocalDateTime end = LocalDateTime.now().plusHours(1);
+
+        Booking booking = Booking.builder()
+                .status(Status.APPROVED)
+                .item(item)
+                .booker(user)
+                .start(start)
+                .end(end)
                 .build();
+        booking = bookingRepository.save(booking);
 
-        BookingInputDto createdBooking = bookingService.createBooking(user.getId(), bookingDto);
+        BookingInputDto bookingResponseDto = bookingService.getBookingById(user.getId(), booking.getId());
 
-        BookingInputDto fetchedBooking = bookingService.getBookingById(user.getId(), createdBooking.getId());
-
-        assertNotNull(fetchedBooking);
-        assertEquals(createdBooking.getId(), fetchedBooking.getId());
+        assertNotNull(bookingResponseDto.getId());
+        assertEquals(user.getId(), bookingResponseDto.getBooker().getId());
+        assertEquals(Status.APPROVED.name(), bookingResponseDto.getStatus());
+        assertEquals(item.getId(), bookingResponseDto.getItem().getId());
     }
 
     @Test
-    public void testGetBookings() {
-        BookingDto bookingDto = BookingDto.builder()
-                .itemId(item.getId())
-                .start(LocalDateTime.now().plusHours(1))
-                .end(LocalDateTime.now().plusHours(2))
+    void updateBookingTest() {
+        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
+        LocalDateTime end = LocalDateTime.now().plusHours(1);
+
+        Booking booking = Booking.builder()
+                .status(Status.WAITING)
+                .item(item)
+                .booker(user)
+                .start(start)
+                .end(end)
                 .build();
+        booking = bookingRepository.save(booking);
 
-        bookingService.createBooking(user.getId(), bookingDto);
+        BookingInputDto bookingResponseDto = bookingService.updateBooking(user.getId(), booking.getId(), true);
 
-        List<BookingInputDto> bookings = bookingService.getBookings(user.getId(), "ALL");
-
-        assertFalse(bookings.isEmpty());
+        assertNotNull(bookingResponseDto.getId());
+        assertEquals(user.getId(), bookingResponseDto.getBooker().getId());
+        assertEquals(item.getId(), bookingResponseDto.getItem().getId());
+        assertEquals(Status.APPROVED.name(), bookingResponseDto.getStatus());
     }
 
     @Test
-    public void testGetBookingsOwner() {
-        BookingDto bookingDto = BookingDto.builder()
-                .itemId(item.getId())
-                .start(LocalDateTime.now().plusHours(1))
-                .end(LocalDateTime.now().plusHours(2))
+    void getBookingsTest() {
+        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
+        LocalDateTime end = LocalDateTime.now().plusHours(1);
+
+        Booking booking = Booking.builder()
+                .status(Status.APPROVED)
+                .item(item)
+                .booker(user)
+                .start(start)
+                .end(end)
                 .build();
+        booking = bookingRepository.save(booking);
 
-        bookingService.createBooking(user.getId(), bookingDto);
+        List<BookingInputDto> bookingResponseDtoList = bookingService.getBookings(user.getId(), State.ALL.name());
 
-        List<BookingInputDto> bookings = bookingService.getBookingsOwner(user.getId(), "ALL");
-
-        assertFalse(bookings.isEmpty());
+        assertFalse(bookingResponseDtoList.isEmpty());
+        assertEquals(1, bookingResponseDtoList.size());
+        BookingInputDto bookingResponseDto = bookingResponseDtoList.getFirst();
+        assertEquals(Status.APPROVED.name(), bookingResponseDto.getStatus());
+        assertEquals(item.getId(), bookingResponseDto.getItem().getId());
+        assertEquals(user.getId(), bookingResponseDto.getBooker().getId());
     }
 
     @Test
-    public void testUpdateBooking() {
-        BookingDto bookingDto = BookingDto.builder()
-                .itemId(item.getId())
-                .start(LocalDateTime.now().plusHours(1))
-                .end(LocalDateTime.now().plusHours(2))
+    void getBookingsOwnerTest() {
+        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
+        LocalDateTime end = LocalDateTime.now().plusHours(1);
+
+        Booking booking = Booking.builder()
+                .status(Status.APPROVED)
+                .item(item)
+                .booker(user)
+                .start(start)
+                .end(end)
                 .build();
+        booking = bookingRepository.save(booking);
 
-        BookingInputDto createdBooking = bookingService.createBooking(user.getId(), bookingDto);
+        List<BookingInputDto> bookingResponseDtoList = bookingService.getBookingsOwner(user.getId(), State.ALL.name());
 
-        BookingInputDto updatedBooking = bookingService.updateBooking(user.getId(), createdBooking.getId(), true);
-
-        assertNotNull(updatedBooking);
-        assertEquals(Status.APPROVED.name(), updatedBooking.getStatus());
+        assertFalse(bookingResponseDtoList.isEmpty());
+        assertEquals(1, bookingResponseDtoList.size());
+        BookingInputDto bookingResponseDto = bookingResponseDtoList.getFirst();
+        assertEquals(Status.APPROVED.name(), bookingResponseDto.getStatus());
+        assertEquals(item.getId(), bookingResponseDto.getItem().getId());
+        assertEquals(user.getId(), bookingResponseDto.getBooker().getId());
     }
 }
