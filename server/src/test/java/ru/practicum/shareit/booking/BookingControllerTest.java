@@ -1,6 +1,7 @@
 package ru.practicum.shareit.booking;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -29,17 +30,22 @@ public class BookingControllerTest {
     @MockBean
     private BookingService bookingService;
 
+    private BookingInputDto bookingInputDto;
+
+    @BeforeEach
+    void setUp() {
+        bookingInputDto = BookingInputDto.builder()
+                .id(1L)
+                .status("WAITING")
+                .build();
+    }
+
     @Test
     public void testCreateBooking() throws Exception {
         BookingDto bookingDto = BookingDto.builder()
                 .itemId(1L)
                 .start(LocalDateTime.now().plusHours(1))
                 .end(LocalDateTime.now().plusHours(2))
-                .build();
-
-        BookingInputDto bookingInputDto = BookingInputDto.builder()
-                .id(1L)
-                .status("WAITING")
                 .build();
 
         when(bookingService.createBooking(any(Long.class), any(BookingDto.class)))
@@ -56,11 +62,6 @@ public class BookingControllerTest {
 
     @Test
     public void testGetBookingById() throws Exception {
-        BookingInputDto bookingInputDto = BookingInputDto.builder()
-                .id(1L)
-                .status("WAITING")
-                .build();
-
         when(bookingService.getBookingById(any(Long.class), any(Long.class)))
                 .thenReturn(bookingInputDto);
 
@@ -73,11 +74,6 @@ public class BookingControllerTest {
 
     @Test
     public void testGetBookings() throws Exception {
-        BookingInputDto bookingInputDto = BookingInputDto.builder()
-                .id(1L)
-                .status("WAITING")
-                .build();
-
         when(bookingService.getBookings(any(Long.class), any(String.class)))
                 .thenReturn(Collections.singletonList(bookingInputDto));
 
@@ -91,11 +87,6 @@ public class BookingControllerTest {
 
     @Test
     public void testGetBookingsOwner() throws Exception {
-        BookingInputDto bookingInputDto = BookingInputDto.builder()
-                .id(1L)
-                .status("WAITING")
-                .build();
-
         when(bookingService.getBookingsOwner(any(Long.class), any(String.class)))
                 .thenReturn(Collections.singletonList(bookingInputDto));
 

@@ -39,6 +39,9 @@ class BookingServiceImplTest {
 
     private User user;
     private Item item;
+    private LocalDateTime start;
+    private LocalDateTime end;
+    private Booking booking;
 
     @BeforeEach
     void setUp() {
@@ -59,13 +62,22 @@ class BookingServiceImplTest {
                 .available(true)
                 .build();
         item = itemRepository.save(item);
+
+        start = LocalDateTime.now().plusMinutes(5);
+        end = LocalDateTime.now().plusHours(1);
+
+        booking = Booking.builder()
+                .status(Status.WAITING)
+                .item(item)
+                .booker(user)
+                .start(start)
+                .end(end)
+                .build();
+        booking = bookingRepository.save(booking);
     }
 
     @Test
     void createBookingTest() {
-        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
-        LocalDateTime end = LocalDateTime.now().plusHours(1);
-
         BookingDto bookingDto = BookingDto.builder()
                 .start(start)
                 .end(end)
@@ -84,40 +96,16 @@ class BookingServiceImplTest {
 
     @Test
     void getBookingTest() {
-        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
-        LocalDateTime end = LocalDateTime.now().plusHours(1);
-
-        Booking booking = Booking.builder()
-                .status(Status.APPROVED)
-                .item(item)
-                .booker(user)
-                .start(start)
-                .end(end)
-                .build();
-        booking = bookingRepository.save(booking);
-
         BookingInputDto bookingResponseDto = bookingService.getBookingById(user.getId(), booking.getId());
 
         assertNotNull(bookingResponseDto.getId());
         assertEquals(user.getId(), bookingResponseDto.getBooker().getId());
-        assertEquals(Status.APPROVED.name(), bookingResponseDto.getStatus());
+        assertEquals(Status.WAITING.name(), bookingResponseDto.getStatus());
         assertEquals(item.getId(), bookingResponseDto.getItem().getId());
     }
 
     @Test
     void updateBookingTest() {
-        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
-        LocalDateTime end = LocalDateTime.now().plusHours(1);
-
-        Booking booking = Booking.builder()
-                .status(Status.WAITING)
-                .item(item)
-                .booker(user)
-                .start(start)
-                .end(end)
-                .build();
-        booking = bookingRepository.save(booking);
-
         BookingInputDto bookingResponseDto = bookingService.updateBooking(user.getId(), booking.getId(), true);
 
         assertNotNull(bookingResponseDto.getId());
@@ -128,57 +116,30 @@ class BookingServiceImplTest {
 
     @Test
     void getBookingsTest() {
-        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
-        LocalDateTime end = LocalDateTime.now().plusHours(1);
-
-        Booking booking = Booking.builder()
-                .status(Status.APPROVED)
-                .item(item)
-                .booker(user)
-                .start(start)
-                .end(end)
-                .build();
-        booking = bookingRepository.save(booking);
-
         List<BookingInputDto> bookingResponseDtoList = bookingService.getBookings(user.getId(), State.ALL.name());
 
         assertFalse(bookingResponseDtoList.isEmpty());
         assertEquals(1, bookingResponseDtoList.size());
-        BookingInputDto bookingResponseDto = bookingResponseDtoList.getFirst();
-        assertEquals(Status.APPROVED.name(), bookingResponseDto.getStatus());
+        BookingInputDto bookingResponseDto = bookingResponseDtoList.get(0);
+        assertEquals(Status.WAITING.name(), bookingResponseDto.getStatus());
         assertEquals(item.getId(), bookingResponseDto.getItem().getId());
         assertEquals(user.getId(), bookingResponseDto.getBooker().getId());
     }
 
     @Test
     void getBookingsOwnerTest() {
-        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
-        LocalDateTime end = LocalDateTime.now().plusHours(1);
-
-        Booking booking = Booking.builder()
-                .status(Status.APPROVED)
-                .item(item)
-                .booker(user)
-                .start(start)
-                .end(end)
-                .build();
-        booking = bookingRepository.save(booking);
-
         List<BookingInputDto> bookingResponseDtoList = bookingService.getBookingsOwner(user.getId(), State.ALL.name());
 
         assertFalse(bookingResponseDtoList.isEmpty());
         assertEquals(1, bookingResponseDtoList.size());
-        BookingInputDto bookingResponseDto = bookingResponseDtoList.getFirst();
-        assertEquals(Status.APPROVED.name(), bookingResponseDto.getStatus());
+        BookingInputDto bookingResponseDto = bookingResponseDtoList.get(0);
+        assertEquals(Status.WAITING.name(), bookingResponseDto.getStatus());
         assertEquals(item.getId(), bookingResponseDto.getItem().getId());
         assertEquals(user.getId(), bookingResponseDto.getBooker().getId());
     }
 
     @Test
     void createBookingShouldThrowNotFoundExceptionWhenItemNotFound() {
-        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
-        LocalDateTime end = LocalDateTime.now().plusHours(1);
-
         BookingDto bookingDto = BookingDto.builder()
                 .start(start)
                 .end(end)
@@ -194,9 +155,6 @@ class BookingServiceImplTest {
 
     @Test
     void createBookingShouldThrowNotFoundExceptionWhenUserNotFound() {
-        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
-        LocalDateTime end = LocalDateTime.now().plusHours(1);
-
         BookingDto bookingDto = BookingDto.builder()
                 .start(start)
                 .end(end)
@@ -212,9 +170,6 @@ class BookingServiceImplTest {
 
     @Test
     void createBookingShouldThrowValidationExceptionWhenItemNotAvailable() {
-        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
-        LocalDateTime end = LocalDateTime.now().plusHours(1);
-
         item.setAvailable(false);
         itemRepository.save(item);
 
@@ -240,18 +195,6 @@ class BookingServiceImplTest {
 
     @Test
     void updateBookingShouldThrowValidationExceptionWhenUserIsNotOwner() {
-        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
-        LocalDateTime end = LocalDateTime.now().plusHours(1);
-
-        Booking booking = Booking.builder()
-                .status(Status.WAITING)
-                .item(item)
-                .booker(user)
-                .start(start)
-                .end(end)
-                .build();
-        booking = bookingRepository.save(booking);
-
         User anotherUser = User.builder()
                 .name("Another User")
                 .email("another@test.com")
@@ -259,9 +202,8 @@ class BookingServiceImplTest {
         anotherUser = userRepository.save(anotherUser);
 
         User finalAnotherUser = anotherUser;
-        Booking finalBooking = booking;
         assertThrows(ValidationException.class, () -> {
-            bookingService.updateBooking(finalAnotherUser.getId(), finalBooking.getId(), true);
+            bookingService.updateBooking(finalAnotherUser.getId(), booking.getId(), true);
         });
     }
 
@@ -274,18 +216,6 @@ class BookingServiceImplTest {
 
     @Test
     void getBookingByIdShouldThrowValidationExceptionWhenUserIsNotBookerOrOwner() {
-        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
-        LocalDateTime end = LocalDateTime.now().plusHours(1);
-
-        Booking booking = Booking.builder()
-                .status(Status.APPROVED)
-                .item(item)
-                .booker(user)
-                .start(start)
-                .end(end)
-                .build();
-        booking = bookingRepository.save(booking);
-
         User anotherUser = User.builder()
                 .name("Another User")
                 .email("another@test.com")
@@ -293,9 +223,8 @@ class BookingServiceImplTest {
         anotherUser = userRepository.save(anotherUser);
 
         User finalAnotherUser = anotherUser;
-        Booking finalBooking = booking;
         assertThrows(ValidationException.class, () -> {
-            bookingService.getBookingById(finalAnotherUser.getId(), finalBooking.getId());
+            bookingService.getBookingById(finalAnotherUser.getId(), booking.getId());
         });
     }
 
@@ -329,18 +258,6 @@ class BookingServiceImplTest {
 
     @Test
     void updateBookingShouldSetStatusToApprovedWhenApprovedIsTrue() {
-        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
-        LocalDateTime end = LocalDateTime.now().plusHours(1);
-
-        Booking booking = Booking.builder()
-                .status(Status.WAITING)
-                .item(item)
-                .booker(user)
-                .start(start)
-                .end(end)
-                .build();
-        booking = bookingRepository.save(booking);
-
         BookingInputDto bookingResponseDto = bookingService.updateBooking(user.getId(), booking.getId(), true);
 
         assertNotNull(bookingResponseDto.getId());
@@ -349,18 +266,6 @@ class BookingServiceImplTest {
 
     @Test
     void updateBookingShouldSetStatusToRejectedWhenApprovedIsFalse() {
-        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
-        LocalDateTime end = LocalDateTime.now().plusHours(1);
-
-        Booking booking = Booking.builder()
-                .status(Status.WAITING)
-                .item(item)
-                .booker(user)
-                .start(start)
-                .end(end)
-                .build();
-        booking = bookingRepository.save(booking);
-
         BookingInputDto bookingResponseDto = bookingService.updateBooking(user.getId(), booking.getId(), false);
 
         assertNotNull(bookingResponseDto.getId());
@@ -369,18 +274,6 @@ class BookingServiceImplTest {
 
     @Test
     void getBookingsShouldReturnAllBookingsWhenStateIsAll() {
-        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
-        LocalDateTime end = LocalDateTime.now().plusHours(1);
-
-        Booking booking = Booking.builder()
-                .status(Status.APPROVED)
-                .item(item)
-                .booker(user)
-                .start(start)
-                .end(end)
-                .build();
-        booking = bookingRepository.save(booking);
-
         List<BookingInputDto> bookingResponseDtoList = bookingService.getBookings(user.getId(), State.ALL.name());
 
         assertFalse(bookingResponseDtoList.isEmpty());
@@ -389,18 +282,6 @@ class BookingServiceImplTest {
 
     @Test
     void getBookingsShouldReturnFutureBookingsWhenStateIsFuture() {
-        LocalDateTime start = LocalDateTime.now().plusHours(1);
-        LocalDateTime end = LocalDateTime.now().plusHours(2);
-
-        Booking booking = Booking.builder()
-                .status(Status.APPROVED)
-                .item(item)
-                .booker(user)
-                .start(start)
-                .end(end)
-                .build();
-        booking = bookingRepository.save(booking);
-
         List<BookingInputDto> bookingResponseDtoList = bookingService.getBookings(user.getId(), State.FUTURE.name());
 
         assertFalse(bookingResponseDtoList.isEmpty());
@@ -409,18 +290,6 @@ class BookingServiceImplTest {
 
     @Test
     void getBookingsShouldReturnWaitingBookingsWhenStateIsWaiting() {
-        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
-        LocalDateTime end = LocalDateTime.now().plusHours(1);
-
-        Booking booking = Booking.builder()
-                .status(Status.WAITING)
-                .item(item)
-                .booker(user)
-                .start(start)
-                .end(end)
-                .build();
-        booking = bookingRepository.save(booking);
-
         List<BookingInputDto> bookingResponseDtoList = bookingService.getBookings(user.getId(), State.WAITING.name());
 
         assertFalse(bookingResponseDtoList.isEmpty());
@@ -429,17 +298,8 @@ class BookingServiceImplTest {
 
     @Test
     void getBookingsShouldReturnRejectedBookingsWhenStateIsRejected() {
-        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
-        LocalDateTime end = LocalDateTime.now().plusHours(1);
-
-        Booking booking = Booking.builder()
-                .status(Status.REJECTED)
-                .item(item)
-                .booker(user)
-                .start(start)
-                .end(end)
-                .build();
-        booking = bookingRepository.save(booking);
+        booking.setStatus(Status.REJECTED);
+        bookingRepository.save(booking);
 
         List<BookingInputDto> bookingResponseDtoList = bookingService.getBookings(user.getId(), State.REJECTED.name());
 
@@ -456,18 +316,6 @@ class BookingServiceImplTest {
 
     @Test
     void getBookingsOwnerShouldReturnAllBookingsWhenStateIsAll() {
-        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
-        LocalDateTime end = LocalDateTime.now().plusHours(1);
-
-        Booking booking = Booking.builder()
-                .status(Status.APPROVED)
-                .item(item)
-                .booker(user)
-                .start(start)
-                .end(end)
-                .build();
-        booking = bookingRepository.save(booking);
-
         List<BookingInputDto> bookingResponseDtoList = bookingService.getBookingsOwner(item.getOwner().getId(), State.ALL.name());
 
         assertFalse(bookingResponseDtoList.isEmpty());
@@ -476,18 +324,6 @@ class BookingServiceImplTest {
 
     @Test
     void getBookingsOwnerShouldReturnFutureBookingsWhenStateIsFuture() {
-        LocalDateTime start = LocalDateTime.now().plusHours(1);
-        LocalDateTime end = LocalDateTime.now().plusHours(2);
-
-        Booking booking = Booking.builder()
-                .status(Status.APPROVED)
-                .item(item)
-                .booker(user)
-                .start(start)
-                .end(end)
-                .build();
-        booking = bookingRepository.save(booking);
-
         List<BookingInputDto> bookingResponseDtoList = bookingService.getBookingsOwner(item.getOwner().getId(), State.FUTURE.name());
 
         assertFalse(bookingResponseDtoList.isEmpty());
@@ -496,18 +332,6 @@ class BookingServiceImplTest {
 
     @Test
     void getBookingsOwnerShouldReturnWaitingBookingsWhenStateIsWaiting() {
-        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
-        LocalDateTime end = LocalDateTime.now().plusHours(1);
-
-        Booking booking = Booking.builder()
-                .status(Status.WAITING)
-                .item(item)
-                .booker(user)
-                .start(start)
-                .end(end)
-                .build();
-        booking = bookingRepository.save(booking);
-
         List<BookingInputDto> bookingResponseDtoList = bookingService.getBookingsOwner(item.getOwner().getId(), State.WAITING.name());
 
         assertFalse(bookingResponseDtoList.isEmpty());
@@ -516,17 +340,8 @@ class BookingServiceImplTest {
 
     @Test
     void getBookingsOwnerShouldReturnRejectedBookingsWhenStateIsRejected() {
-        LocalDateTime start = LocalDateTime.now().plusMinutes(5);
-        LocalDateTime end = LocalDateTime.now().plusHours(1);
-
-        Booking booking = Booking.builder()
-                .status(Status.REJECTED)
-                .item(item)
-                .booker(user)
-                .start(start)
-                .end(end)
-                .build();
-        booking = bookingRepository.save(booking);
+        booking.setStatus(Status.REJECTED);
+        bookingRepository.save(booking);
 
         List<BookingInputDto> bookingResponseDtoList = bookingService.getBookingsOwner(item.getOwner().getId(), State.REJECTED.name());
 
@@ -540,6 +355,4 @@ class BookingServiceImplTest {
             bookingService.getBookingsOwner(item.getOwner().getId(), "UNKNOWN_STATE");
         });
     }
-
-
 }

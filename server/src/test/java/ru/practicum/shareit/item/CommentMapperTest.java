@@ -1,5 +1,6 @@
 package ru.practicum.shareit.item;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.model.Item;
@@ -12,22 +13,28 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class CommentMapperTest {
 
+    private User author;
+    private Item item;
+
+    @BeforeEach
+    void setUp() {
+        author = User.builder()
+                .id(1L)
+                .name("Test Author")
+                .build();
+
+        item = Item.builder()
+                .id(1L)
+                .name("Test Item")
+                .build();
+    }
+
     @Test
     void testToComment() {
         CommentDto commentDto = CommentDto.builder()
                 .id(1L)
                 .text("Test comment")
                 .created(LocalDateTime.now())
-                .build();
-
-        User author = User.builder()
-                .id(1L)
-                .name("Test Author")
-                .build();
-
-        Item item = Item.builder()
-                .id(1L)
-                .name("Test Item")
                 .build();
 
         Comment comment = CommentMapper.toComment(commentDto, author, item);
@@ -41,16 +48,6 @@ class CommentMapperTest {
 
     @Test
     void testToCommentDto() {
-        User author = User.builder()
-                .id(1L)
-                .name("Test Author")
-                .build();
-
-        Item item = Item.builder()
-                .id(1L)
-                .name("Test Item")
-                .build();
-
         Comment comment = Comment.builder()
                 .id(1L)
                 .text("Test comment")
@@ -70,16 +67,6 @@ class CommentMapperTest {
 
     @Test
     void testToCommentDtoList() {
-        User author = User.builder()
-                .id(1L)
-                .name("Test Author")
-                .build();
-
-        Item item = Item.builder()
-                .id(1L)
-                .name("Test Item")
-                .build();
-
         Comment comment1 = Comment.builder()
                 .id(1L)
                 .text("Test comment 1")
@@ -100,7 +87,6 @@ class CommentMapperTest {
 
         List<CommentDto> commentDtos = CommentMapper.toCommentDtoList(comments);
 
-        // Assert
         assertEquals(comments.size(), commentDtos.size());
         for (int i = 0; i < comments.size(); i++) {
             assertEquals(comments.get(i).getId(), commentDtos.get(i).getId());

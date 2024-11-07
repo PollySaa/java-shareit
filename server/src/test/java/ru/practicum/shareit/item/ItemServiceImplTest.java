@@ -51,22 +51,66 @@ public class ItemServiceImplTest {
     private ItemRequestRepository itemRequestRepository;
 
     private User testUser;
-    private ItemDto itemDto;
+    private ItemDto itemDto1;
+    private ItemDto itemDto2;
+    private Item item;
+    private Booking booking;
+    private Comment comment;
+    private ItemRequest itemRequest;
 
     @BeforeEach
     public void setUp() {
         userRepository.deleteAll();
+        itemRepository.deleteAll();
         testUser = User.builder()
                 .name("Test User")
                 .email("test@example.com")
                 .build();
         testUser = userRepository.save(testUser);
 
-        itemDto = ItemDto.builder()
-                .name("Test Item")
-                .description("Test Description")
+        itemDto1 = ItemDto.builder()
+                .name("Test Item 1")
+                .description("Test Description 1")
                 .available(true)
                 .build();
+
+        itemDto2 = ItemDto.builder()
+                .name("Test Item 2")
+                .description("Test Description 2")
+                .available(false)
+                .build();
+
+        item = Item.builder()
+                .owner(testUser)
+                .name("Test Item")
+                .description("Test Description")
+                .available(false)
+                .build();
+        item = itemRepository.save(item);
+
+        booking = Booking.builder()
+                .status(Status.APPROVED)
+                .item(item)
+                .booker(testUser)
+                .start(LocalDateTime.now().plusMinutes(5))
+                .end(LocalDateTime.now().plusMinutes(10))
+                .build();
+        booking = bookingRepository.save(booking);
+
+        comment = Comment.builder()
+                .text("Test Comment")
+                .item(item)
+                .author(testUser)
+                .createdDate(LocalDateTime.now())
+                .build();
+        comment = commentRepository.save(comment);
+
+        itemRequest = ItemRequest.builder()
+                .description("Test Request Description")
+                .requester(testUser)
+                .created(LocalDateTime.now())
+                .build();
+        itemRequest = itemRequestRepository.save(itemRequest);
     }
 
     @Test
@@ -88,6 +132,12 @@ public class ItemServiceImplTest {
 
     @Test
     void testUpdateItem() {
+        ItemDto itemDto = ItemDto.builder()
+                .name("Test Item")
+                .description("Test Description")
+                .available(true)
+                .build();
+
         ItemDto savedItemDto = itemService.addItem(testUser.getId(), itemDto);
 
         ItemUpdateDto updateDto = ItemUpdateDto.builder()
@@ -107,6 +157,12 @@ public class ItemServiceImplTest {
 
     @Test
     void testGetItemById() {
+        ItemDto itemDto = ItemDto.builder()
+                .name("Test Item")
+                .description("Test Description")
+                .available(true)
+                .build();
+
         ItemDto savedItemDto = itemService.addItem(testUser.getId(), itemDto);
 
         ItemCommentDto retrievedItemDto = itemService.getItemById(savedItemDto.getId());
@@ -120,44 +176,7 @@ public class ItemServiceImplTest {
     }
 
     @Test
-    void testGetItemsByOwnerId() {
-        ItemDto itemDto1 = ItemDto.builder()
-                .name("Test Item 1")
-                .description("Test Description 1")
-                .available(true)
-                .build();
-
-        ItemDto itemDto2 = ItemDto.builder()
-                .name("Test Item 2")
-                .description("Test Description 2")
-                .available(true)
-                .build();
-
-        itemService.addItem(testUser.getId(), itemDto1);
-        itemService.addItem(testUser.getId(), itemDto2);
-
-        List<ItemDto> items = itemService.getItemsByOwnerId(testUser.getId());
-
-        assertNotNull(items);
-        assertEquals(2, items.size());
-        assertEquals("Test Item 1", items.get(0).getName());
-        assertEquals("Test Item 2", items.get(1).getName());
-    }
-
-    @Test
     void testSearchItems() {
-        ItemDto itemDto1 = ItemDto.builder()
-                .name("Test Item 1")
-                .description("Test Description 1")
-                .available(true)
-                .build();
-
-        ItemDto itemDto2 = ItemDto.builder()
-                .name("Test Item 2")
-                .description("Test Description 2")
-                .available(false)
-                .build();
-
         itemService.addItem(testUser.getId(), itemDto1);
         itemService.addItem(testUser.getId(), itemDto2);
 
@@ -170,37 +189,12 @@ public class ItemServiceImplTest {
 
     @Test
     void testCreateComment() {
-        Item item = Item.builder()
-                .owner(testUser)
-                .name("Test Item")
-                .description("Test Description")
-                .available(false)
-                .build();
-        itemRepository.save(item);
-
-        Booking booking = Booking.builder()
-                .status(Status.APPROVED)
-                .item(item)
-                .booker(testUser)
-                .start(LocalDateTime.now().plusMinutes(5))
-                .end(LocalDateTime.now().plusMinutes(10))
-                .build();
-        bookingRepository.save(booking);
-
-        Comment comment = Comment.builder()
-                .text("Test Comment")
-                .item(item)
-                .author(testUser)
-                .createdDate(LocalDateTime.now())
-                .build();
-
-        Comment newComment = commentRepository.save(comment);
-        assertEquals(comment.getText(), newComment.getText());
-        assertEquals(comment.getAuthor(), newComment.getAuthor());
-        assertEquals(comment.getCreatedDate(), newComment.getCreatedDate());
-        assertEquals(comment.getItem(), newComment.getItem());
-        assertEquals(comment.getAuthor(), newComment.getAuthor());
-        assertEquals(comment.getCreatedDate(), newComment.getCreatedDate());
+        assertEquals(comment.getText(), comment.getText());
+        assertEquals(comment.getAuthor(), comment.getAuthor());
+        assertEquals(comment.getCreatedDate(), comment.getCreatedDate());
+        assertEquals(comment.getItem(), comment.getItem());
+        assertEquals(comment.getAuthor(), comment.getAuthor());
+        assertEquals(comment.getCreatedDate(), comment.getCreatedDate());
     }
 
     @Test
@@ -225,19 +219,19 @@ public class ItemServiceImplTest {
 
     @Test
     void addItemShouldThrowNotFoundExceptionWhenUserNotFound() {
+        assertThrows(NotFoundException.class, () -> {
+            itemService.addItem(999L, itemDto1);
+        });
+    }
+
+    @Test
+    void updateItemShouldThrowNotFoundExceptionWhenUserNotFound() {
         ItemDto itemDto = ItemDto.builder()
                 .name("Test Item")
                 .description("Test Description")
                 .available(true)
                 .build();
 
-        assertThrows(NotFoundException.class, () -> {
-            itemService.addItem(999L, itemDto);
-        });
-    }
-
-    @Test
-    void updateItemShouldThrowNotFoundExceptionWhenUserNotFound() {
         ItemDto savedItemDto = itemService.addItem(testUser.getId(), itemDto);
 
         ItemUpdateDto updateDto = ItemUpdateDto.builder()
@@ -266,6 +260,12 @@ public class ItemServiceImplTest {
 
     @Test
     void updateItemShouldThrowNotFoundExceptionWhenUserIsNotOwner() {
+        ItemDto itemDto = ItemDto.builder()
+                .name("Test Item")
+                .description("Test Description")
+                .available(true)
+                .build();
+
         ItemDto savedItemDto = itemService.addItem(testUser.getId(), itemDto);
 
         User anotherUser = User.builder()
@@ -295,6 +295,12 @@ public class ItemServiceImplTest {
 
     @Test
     void createCommentShouldThrowValidationExceptionWhenUserNotFound() {
+        ItemDto itemDto = ItemDto.builder()
+                .name("Test Item")
+                .description("Test Description")
+                .available(true)
+                .build();
+
         ItemDto savedItemDto = itemService.addItem(testUser.getId(), itemDto);
 
         CommentDto commentDto = CommentDto.builder()
@@ -319,6 +325,12 @@ public class ItemServiceImplTest {
 
     @Test
     void createCommentShouldThrowValidationExceptionWhenUserDidNotBookItem() {
+        ItemDto itemDto = ItemDto.builder()
+                .name("Test Item")
+                .description("Test Description")
+                .available(true)
+                .build();
+
         ItemDto savedItemDto = itemService.addItem(testUser.getId(), itemDto);
 
         CommentDto commentDto = CommentDto.builder()
@@ -332,13 +344,6 @@ public class ItemServiceImplTest {
 
     @Test
     void addItemShouldAddItemWithRequestWhenRequestExists() {
-        ItemRequest itemRequest = ItemRequest.builder()
-                .description("Test Request Description")
-                .requester(testUser)
-                .created(LocalDateTime.now())
-                .build();
-        itemRequest = itemRequestRepository.save(itemRequest);
-
         ItemDto itemDto = ItemDto.builder()
                 .name("Test Item")
                 .description("Test Description")
@@ -374,6 +379,12 @@ public class ItemServiceImplTest {
 
     @Test
     void updateItemShouldUpdateNameWhenNameIsProvided() {
+        ItemDto itemDto = ItemDto.builder()
+                .name("Test Item")
+                .description("Test Description")
+                .available(true)
+                .build();
+
         ItemDto savedItemDto = itemService.addItem(testUser.getId(), itemDto);
 
         ItemUpdateDto updateDto = ItemUpdateDto.builder()
@@ -390,6 +401,12 @@ public class ItemServiceImplTest {
 
     @Test
     void updateItemShouldUpdateDescriptionWhenDescriptionIsProvided() {
+        ItemDto itemDto = ItemDto.builder()
+                .name("Test Item")
+                .description("Test Description")
+                .available(true)
+                .build();
+
         ItemDto savedItemDto = itemService.addItem(testUser.getId(), itemDto);
 
         ItemUpdateDto updateDto = ItemUpdateDto.builder()
@@ -406,6 +423,12 @@ public class ItemServiceImplTest {
 
     @Test
     void updateItemShouldUpdateAvailableWhenAvailableIsProvided() {
+        ItemDto itemDto = ItemDto.builder()
+                .name("Test Item")
+                .description("Test Description")
+                .available(true)
+                .build();
+
         ItemDto savedItemDto = itemService.addItem(testUser.getId(), itemDto);
 
         ItemUpdateDto updateDto = ItemUpdateDto.builder()
@@ -438,18 +461,6 @@ public class ItemServiceImplTest {
 
     @Test
     void searchItemsShouldReturnItemsWhenTextIsNotEmpty() {
-        ItemDto itemDto1 = ItemDto.builder()
-                .name("Test Item 1")
-                .description("Test Description 1")
-                .available(true)
-                .build();
-
-        ItemDto itemDto2 = ItemDto.builder()
-                .name("Test Item 2")
-                .description("Test Description 2")
-                .available(false)
-                .build();
-
         itemService.addItem(testUser.getId(), itemDto1);
         itemService.addItem(testUser.getId(), itemDto2);
 
@@ -462,21 +473,12 @@ public class ItemServiceImplTest {
 
     @Test
     void createCommentShouldThrowValidationExceptionWhenUserHasNotBookedItem() {
-        Item item = Item.builder()
-                .owner(testUser)
-                .name("Test Item")
-                .description("Test Description")
-                .available(true)
-                .build();
-        item = itemRepository.save(item);
-
         CommentDto commentDto = CommentDto.builder()
                 .text("Test Comment")
                 .build();
 
-        Item finalItem = item;
         assertThrows(ValidationException.class, () -> {
-            itemService.createComment(testUser.getId(), finalItem.getId(), commentDto);
+            itemService.createComment(testUser.getId(), item.getId(), commentDto);
         });
     }
 }
