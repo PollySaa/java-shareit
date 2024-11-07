@@ -4,13 +4,13 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.UserAlreadyExistsException;
 import ru.practicum.shareit.user.dto.UserDto;
 
 import java.util.List;
+import java.util.Optional;
 
 import static java.util.stream.Collectors.toList;
 
@@ -57,17 +57,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteUser(Long id) {
-        try {
-            userRepository.deleteById(id);
-        } catch (EmptyResultDataAccessException e) {
-            throw new NotFoundException("Пользователь с таким id = " + id + "не был найден!");
+        Optional<User> userOptional = userRepository.findById(id);
+        if (userOptional.isEmpty()) {
+            throw new NotFoundException("Пользователь с таким id = " + id + " не был найден!");
         }
+        userRepository.deleteById(id);
     }
 
     @Override
     public UserDto getUserById(Long id) {
         return UserMapper.toUserDto(userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Пользователь с таким id = " + id + "не был найден!")));
+                .orElseThrow(() -> new NotFoundException("Пользователь с таким id = " + id + " не был найден!")));
     }
 
     @Override

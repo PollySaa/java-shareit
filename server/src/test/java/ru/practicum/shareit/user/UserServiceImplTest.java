@@ -1,6 +1,7 @@
-package ru.practicum.shareit;
+package ru.practicum.shareit.user;
 
 import jakarta.transaction.Transactional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -8,8 +9,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.UserAlreadyExistsException;
-import ru.practicum.shareit.user.UserRepository;
-import ru.practicum.shareit.user.UserServiceImpl;
 import ru.practicum.shareit.user.dto.UserDto;
 
 import java.util.List;
@@ -26,6 +25,11 @@ public class UserServiceImplTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @BeforeEach
+    void setUp() {
+        userRepository.deleteAll();
+    }
 
     @Test
     void testCreateUser() {
@@ -172,5 +176,12 @@ public class UserServiceImplTest {
         assertNotNull(updatedUserDto.getId());
         assertEquals(createdUserDto.getName(), updatedUserDto.getName());
         assertEquals(updateDto.getEmail(), updatedUserDto.getEmail());
+    }
+
+    @Test
+    void testDeleteUserById() {
+        assertThrows(NotFoundException.class, () -> {
+            userService.deleteUser(999L);
+        });
     }
 }
